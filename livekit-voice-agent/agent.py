@@ -29,7 +29,6 @@ async def my_agent(ctx: agents.JobContext):
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(
                 noise_cancellation=lambda params: noise_cancellation.BVCTelephony() if params.participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_SIP else noise_cancellation.BVC(),
-                video_enabled=True, #screen sharing
             ),
         ),
     )
