@@ -247,7 +247,6 @@ function HoursTab({ settings, update }: TabProps) {
                                 checked={h.enabled}
                                 onCheckedChange={() => updateDay(String(i), { enabled: !h.enabled })}
                             />
-
                             {/* Day name */}
                             <span className={`w-24 text-sm ${h.enabled ? "text-stone-800 font-medium" : "text-stone-400"}`}>
                                 {day}

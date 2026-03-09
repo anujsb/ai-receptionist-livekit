@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const newAppointment: NewAppointment = {
       patientName,
       patientPhone,
-      patientEmail,
+      // patientEmail,
       doctorName,
       startTime: new Date(startTime),
       endTime: new Date(endTime),

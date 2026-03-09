@@ -9,15 +9,18 @@ import { NextRequest, NextResponse } from "next/server";
 // PATCH /api/appointments/[id]
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await req.json();
+
     const [updated] = await db
       .update(appointments)
       .set({ ...body, updatedAt: new Date() })
-      .where(eq(appointments.id, params.id))
+      .where(eq(appointments.id, id))
       .returning();
+
     return NextResponse.json(updated);
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
@@ -27,16 +30,21 @@ export async function PATCH(
 // DELETE /api/appointments/[id]
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const [appt] = await db
       .select()
       .from(appointments)
-      .where(eq(appointments.id, params.id));
+      .where(eq(appointments.id, id));
 
     if (!appt) {
-      return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Appointment not found" },
+        { status: 404 }
+      );
     }
 
     if (appt.calBookingUid) {
@@ -46,7 +54,7 @@ export async function DELETE(
     const [cancelled] = await db
       .update(appointments)
       .set({ status: "cancelled", updatedAt: new Date() })
-      .where(eq(appointments.id, params.id))
+      .where(eq(appointments.id, id))
       .returning();
 
     return NextResponse.json(cancelled);

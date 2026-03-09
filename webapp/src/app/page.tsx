@@ -103,7 +103,7 @@ export default function LandingPage() {
           </div>
 
           {/* Mock call UI */}
-          <div className="bg-gradient-to-b from-white to-stone-50/50 p-8">
+          <div className="bg-linear-to-b from-white to-stone-50/50 p-8">
             <div className="mx-auto max-w-md">
               <div className="mb-6 text-center">
                 <div className="flex justify-center items-center bg-stone-100 mx-auto mb-3 rounded-full w-14 h-14">
@@ -188,7 +188,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="z-20 relative relative bg-stone-900 py-24 overflow-hidden">
+      <section id="features" className="z-20 relative bg-stone-900 py-24 overflow-hidden">
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
