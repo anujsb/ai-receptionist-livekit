@@ -92,9 +92,9 @@ function LandingScreen({
     <div className="flex flex-col items-center gap-10 max-w-md text-center">
       {/* Animated orb */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-cyan-400 opacity-20 blur-2xl rounded-full w-32 h-32 animate-pulse" />
+        <div className="absolute inset-0 bg-linear-to-br from-violet-500 via-fuchsia-500 to-cyan-400 opacity-20 blur-2xl rounded-full w-32 h-32 animate-pulse" />
         <div className="relative flex justify-center items-center border border-white/10 rounded-full w-32 h-32">
-          <div className="bg-gradient-to-br from-violet-600 to-cyan-500 opacity-80 rounded-full w-20 h-20 animate-pulse" />
+          <div className="bg-linear-to-br from-violet-600 to-cyan-500 opacity-80 rounded-full w-20 h-20 animate-pulse" />
         </div>
       </div>
 
@@ -118,7 +118,7 @@ function LandingScreen({
       <button
         onClick={onConnect}
         disabled={loading}
-        className="bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 disabled:opacity-50 shadow-lg shadow-violet-500/20 px-8 py-3 rounded-full font-medium text-white text-sm tracking-wide active:scale-95 transition-all disabled:cursor-not-allowed"
+        className="bg-linear-to-r from-violet-600 to-cyan-500 hover:opacity-90 disabled:opacity-50 shadow-lg shadow-violet-500/20 px-8 py-3 rounded-full font-medium text-white text-sm tracking-wide active:scale-95 transition-all disabled:cursor-not-allowed"
       >
         {loading ? (
           <span className="flex items-center gap-2">
@@ -237,8 +237,8 @@ useEffect(() => {
       </div>
 
       {/* Visualizer */}
-      <div className="relative flex flex-col items-center gap-4 bg-white/[0.02] py-8 border border-white/5 rounded-2xl overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-violet-500/5 to-transparent pointer-events-none" />
+      <div className="relative flex flex-col items-center gap-4 bg-white/5 py-8 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-violet-500/5 to-transparent pointer-events-none" />
         <div className="px-8 w-full h-24">
           <BarVisualizer
             state={state}
