@@ -173,7 +173,6 @@
 #     agents.cli.run_app(server)
 
 
-
 import aiohttp
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -183,14 +182,14 @@ from livekit.plugins import (
     openai,
     noise_cancellation,
 )
+import os
 
 load_dotenv(".env.local")
 
-NEXT_APP_URL = "http://localhost:3000"
+NEXT_APP_URL = os.getenv("NEXT_APP_URL", "http://localhost:3000")
 
 
 async def fetch_clinic_settings() -> dict:
-    """Fetch clinic settings from Next.js API."""
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{NEXT_APP_URL}/api/settings") as res:
@@ -198,13 +197,12 @@ async def fetch_clinic_settings() -> dict:
                     return await res.json()
     except Exception as e:
         print(f"[agent] Failed to fetch settings: {e}")
-    # Fallback defaults
     return {
         "clinicName": "Sharma Clinic",
         "doctorName": "Dr. Sharma",
         "clinicPhone": "+91 98765 43210",
         "clinicAddress": "123 MG Road, Pune",
-        "greetingMessage": "Hello! Thank you for calling. How can I help you today?",
+        "greetingMessage": "Hello! Thank you for calling Sharma Clinic. How can I help you today?",
         "responseTone": "friendly",
         "language": "English",
         "fallbackResponse": "I'm sorry, I wasn't able to help with that. Please call back during clinic hours.",
@@ -216,62 +214,69 @@ async def fetch_clinic_settings() -> dict:
 
 
 def build_system_prompt(cfg: dict) -> str:
-    """Build a dynamic system prompt from clinic settings."""
-
-    # Format hours
     days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
     hours_lines = []
     for i, day in enumerate(days):
         h = cfg.get("hours", {}).get(str(i), {})
         if h.get("enabled"):
-            hours_lines.append(f"  {day}: {h['open']} – {h['close']}")
+            hours_lines.append(f"  {day}: {h['open']} - {h['close']}")
         else:
             hours_lines.append(f"  {day}: Closed")
     hours_str = "\n".join(hours_lines)
-
-    # Format escalation rules
-    rules = cfg.get("escalationRules", [])
-    rules_str = ""
-    if rules:
-        rules_str = "\n\nESCALATION RULES (follow exactly):\n" + "\n".join(
-            f"- IF: {r['trigger']}\n  THEN: {r['action']}"
-            for r in rules
-            if r.get("trigger") and r.get("action")
-        )
 
     tone_map = {
         "friendly": "warm, conversational, and empathetic",
         "neutral": "balanced, clear, and professional",
         "formal": "formal, precise, and clinical",
     }
-    tone = tone_map.get(cfg.get("responseTone", "friendly"), "friendly")
+    tone = tone_map.get(cfg.get("responseTone", "friendly"), "warm and friendly")
 
-    return f"""You are Receptra, the AI receptionist for {cfg['clinicName']}.
+    rules = cfg.get("escalationRules", [])
+    rules_str = ""
+    if rules:
+        rules_str = "\n\nESCALATION RULES — follow these exactly:\n" + "\n".join(
+            f"- IF {r['trigger']}: {r['action']}"
+            for r in rules
+            if r.get("trigger") and r.get("action")
+        )
+
+    return f"""You are Receptra, the AI voice receptionist for {cfg['clinicName']}.
+
+CRITICAL RULES:
+- This is a VOICE call. Keep every response under 2-3 sentences. Never list more than 3 options at once.
+- Never introduce yourself unless it's the very first message.
+- Never say "Sure", "Of course", "Certainly", "Absolutely", or "Great" — get straight to the point.
+- Do not ask multiple questions at once. One question per turn.
+- Speak in {cfg.get('language', 'English')} only. Do not switch languages even if the patient does.
+- Be {tone}.
 
 CLINIC INFORMATION:
-- Name: {cfg['clinicName']}
-- Primary Doctor: {cfg['doctorName']}
+- Clinic: {cfg['clinicName']}
+- Doctor: {cfg['doctorName']}
 - Address: {cfg['clinicAddress']}
 - Phone: {cfg['clinicPhone']}
 
 CLINIC HOURS:
 {hours_str}
 
-YOUR BEHAVIOR:
-- Tone: Be {tone}
-- Language: Respond in {cfg.get('language', 'English')} unless the patient speaks another language
-- Keep responses short and natural — this is a voice conversation
-- Always respond in English by default
+APPOINTMENT BOOKING FLOW — follow this exact order:
+1. Ask for the patient's preferred date
+2. Call check_availability for that date
+3. Read out up to 3 available slots by time only (e.g. "10 AM, 11:30 AM, or 2 PM")
+4. Patient picks a slot
+5. Ask for their full name
+6. Ask for their phone number
+7. Ask for their email address
+8. Call book_appointment with the exact ISO time from check_availability — never reconstruct the time
+9. Confirm: "Done! Appointment confirmed for [date and time] with {cfg['doctorName']}."
 
-APPOINTMENT BOOKING:
-- Default appointment duration: {cfg.get('appointmentDuration', 30)} minutes
-- Maximum advance booking: {cfg.get('maxAdvanceBookingDays', 14)} days
-- When booking, always check availability first using check_availability
-- Use the exact ISO time string from check_availability when calling book_appointment
-- Collect: patient name, phone, email before booking
+BOOKING RULES:
+- Duration: {cfg.get('appointmentDuration', 30)} minutes per slot
+- Max advance: {cfg.get('maxAdvanceBookingDays', 14)} days
+- Always use the exact ISO string returned by check_availability as start_time
 
 FALLBACK:
-If you cannot help: "{cfg.get('fallbackResponse', 'Please call us back during clinic hours.')}"
+If you cannot help with something, say: "{cfg.get('fallbackResponse', 'Please call us back during clinic hours.')}"
 {rules_str}"""
 
 
@@ -320,7 +325,7 @@ class Assistant(Agent):
             patient_phone: Patient's phone number
             patient_email: Patient's email address
             doctor_name: Name of the doctor (e.g. "Dr. Sharma")
-            start_time: Exact ISO time string from check_availability
+            start_time: Exact ISO time string from check_availability — do not modify this value
             notes: Optional reason for visit
         """
         try:
@@ -342,7 +347,7 @@ class Assistant(Agent):
             if res.status != 201:
                 return f"Booking failed: {data.get('error', 'Unknown error')}"
 
-            return data.get("message", f"Appointment booked for {patient_name}. Confirmation sent.")
+            return data.get("message", f"Appointment booked for {patient_name}.")
         except Exception as e:
             return f"Could not complete booking: {str(e)}"
 
@@ -352,17 +357,14 @@ server = AgentServer()
 
 @server.rtc_session(agent_name="my-agent")
 async def my_agent(ctx: agents.JobContext):
-    # Fetch latest settings before each session
     cfg = await fetch_clinic_settings()
     system_prompt = build_system_prompt(cfg)
-    greeting = cfg.get("greetingMessage", "Hello! How can I help you today?")
+    greeting = cfg.get("greetingMessage", "Hello! Thank you for calling. How can I help you today?")
 
-    print(f"[agent] Session starting with clinic: {cfg.get('clinicName')}")
+    print(f"[agent] Session starting — clinic: {cfg.get('clinicName')}, tone: {cfg.get('responseTone')}")
 
     session = AgentSession(
-        llm=openai.realtime.RealtimeModel(
-            voice="coral"
-        )
+        llm=openai.realtime.RealtimeModel(voice="coral")
     )
 
     await session.start(
@@ -377,7 +379,9 @@ async def my_agent(ctx: agents.JobContext):
         ),
     )
 
-    await session.generate_reply(instructions=greeting)
+    await session.generate_reply(
+        instructions=f"Say exactly this as your opening message, word for word: \"{greeting}\""
+    )
 
 
 if __name__ == "__main__":
