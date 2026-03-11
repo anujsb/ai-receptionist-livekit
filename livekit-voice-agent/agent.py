@@ -179,7 +179,8 @@ from dotenv import load_dotenv
 from livekit import agents, rtc
 from livekit.agents import AgentServer, AgentSession, Agent, room_io, function_tool
 from livekit.plugins import (
-    openai,
+    # openai,
+    google,
     noise_cancellation,
 )
 import os
@@ -364,7 +365,8 @@ async def my_agent(ctx: agents.JobContext):
     print(f"[agent] Session starting — clinic: {cfg.get('clinicName')}, tone: {cfg.get('responseTone')}")
 
     session = AgentSession(
-        llm=openai.realtime.RealtimeModel(voice="coral")
+        # llm=openai.realtime.RealtimeModel(voice="coral")
+        llm=google.realtime.RealtimeModel(voice="Puck")
     )
 
     await session.start(
