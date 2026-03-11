@@ -54,8 +54,13 @@ export async function getAvailableSlots(
   url.searchParams.set("apiKey", key);
   url.searchParams.set("eventTypeId", String(eventTypeId));
   url.searchParams.set("usernameList", username);
-  url.searchParams.set("startTime", `${dateFrom}T00:00:00Z`);
-  url.searchParams.set("endTime", `${dateTo}T23:59:59Z`);
+  // url.searchParams.set("startTime", `${dateFrom}T00:00:00Z`);
+  // url.searchParams.set("endTime", `${dateTo}T23:59:59Z`);
+
+  url.searchParams.set("startTime", `${dateFrom}T00:00:00+05:30`);
+  url.searchParams.set("endTime", `${dateTo}T23:59:59+05:30`);
+  url.searchParams.set("timeZone", "Asia/Kolkata");
+
 
   const res = await fetch(url.toString());
   const data = await res.json();

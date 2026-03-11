@@ -293,7 +293,8 @@ class Assistant(Agent):
         """
         try:
             dt = datetime.strptime(date.strip(), "%Y-%m-%d")
-            date_to = (dt + timedelta(days=2)).strftime("%Y-%m-%d")
+            # date_to = (dt + timedelta(days=2)).strftime("%Y-%m-%d")
+            date_to = dt.strftime("%Y-%m-%d")
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(
@@ -305,7 +306,8 @@ class Assistant(Agent):
             if not slots:
                 return f"No available slots found around {date}. Try different dates."
 
-            lines = [f"- {slot['label']} [ISO: {slot['time']}]" for slot in slots[:6]]
+            # lines = [f"- {slot['label']} [ISO: {slot['time']}]" for slot in slots[:6]]
+            lines = [f"- {slot['label']} [ISO: {slot['time']}]" for slot in slots[:9]]
             return "Available slots (use the ISO time exactly when booking):\n" + "\n".join(lines)
         except Exception as e:
             return f"Could not check availability: {str(e)}"
